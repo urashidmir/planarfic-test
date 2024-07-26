@@ -4,7 +4,7 @@ This project was bootstrapped with [Create React App](https://github.com/faceboo
 
 Install NPM modules before running this app:
 
-### `npm install --legacy-peer-deps`
+### `npm install`
 
 Runs the app in the development mode.\
 
