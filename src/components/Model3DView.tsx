@@ -1,5 +1,5 @@
-import React, { useState, useRef, Suspense, useCallback, useMemo } from 'react';
-import { Canvas } from '@react-three/fiber';
+import React, { useState, useRef, Suspense, useCallback, useEffect } from 'react';
+import { Canvas, useThree } from '@react-three/fiber';
 import { OrbitControls, Stage, PresentationControls } from '@react-three/drei';
 import type { OrbitControls as OrbitControlsImpl } from 'three-stdlib';
 import * as THREE from 'three';
@@ -20,11 +20,10 @@ const Model3DView: React.FC<Model3DViewProps> = ({ id }) => {
   const [wireframe, setWireframe] = useState<boolean>(false);
   const orbitRef = useRef<OrbitControlsImpl>(null);
 
-  const initialCameraPosition: [number, number, number] = useMemo(() => [0, 0, 5], []);
-  const [cameraPosition, setCameraPosition] = useState<[number, number, number]>(initialCameraPosition);
+  const initialCameraPosition = useRef<THREE.Vector3>(new THREE.Vector3(0, 0, 5));
+  const initialCameraRotation = useRef<THREE.Euler>(new THREE.Euler(0, 0, 0));
 
   const { modelDetail, error } = useModelDetail(id, API_URL, API_TOKEN);
-
 
   const handleClick = useCallback((intersection: THREE.Intersection) => {
     if (intersection && intersection.point) {
@@ -38,12 +37,20 @@ const Model3DView: React.FC<Model3DViewProps> = ({ id }) => {
 
   const resetView = useCallback(() => {
     if (orbitRef.current) {
-      orbitRef.current.reset();
+      orbitRef.current.object.position.copy(initialCameraPosition.current);
+      orbitRef.current.object.rotation.copy(initialCameraRotation.current);
+      orbitRef.current.update();
     }
-    setCameraPosition(initialCameraPosition);
     setWireframe(false);
     setClickedPoint(null);
-  }, [initialCameraPosition]);
+  }, []);
+
+  useEffect(() => {
+    if (orbitRef.current) {
+      initialCameraPosition.current.copy(orbitRef.current.object.position);
+      initialCameraRotation.current.copy(orbitRef.current.object.rotation);
+    }
+  }, [modelDetail]);
 
   if (error) {
     return <div>Error loading model details</div>;
@@ -55,13 +62,13 @@ const Model3DView: React.FC<Model3DViewProps> = ({ id }) => {
         {modelDetail && (
           <>
             <div className="flex-1 relative">
-              <Canvas camera={{ position: cameraPosition }} className="w-full h-full" shadows style={{ position: 'absolute' }}>
+              <Canvas camera={{ position: initialCameraPosition.current.toArray() }} className="w-full h-full" shadows style={{ position: 'absolute' }}>
                 {/* eslint-disable-next-line react/no-unknown-property */}
                 <color attach="background" args={['#000000']} />
                 <PresentationControls speed={1.5} global zoom={0.5} polar={[-0.1, Math.PI / 4]}>
-                <Stage environment="sunset">
-                  <Model3D url={modelDetail.model} wireframe={wireframe} onClick={handleClick} />
-                </Stage>
+                  <Stage environment="sunset">
+                    <Model3D url={modelDetail.model} wireframe={wireframe} onClick={handleClick} />
+                  </Stage>
                 </PresentationControls>
                 <OrbitControls ref={orbitRef} />
               </Canvas>
