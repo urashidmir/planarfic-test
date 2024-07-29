@@ -21,6 +21,7 @@ const Model3DView: React.FC<Model3DViewProps> = ({ id }) => {
   const orbitRef = useRef<OrbitControlsImpl>(null);
 
   const initialCameraPosition = useRef<THREE.Vector3>(new THREE.Vector3(0, 0, 5));
+  const initialCameraTarget = useRef<THREE.Vector3>(new THREE.Vector3(0, 0, 0)); // Initial target
   const initialCameraRotation = useRef<THREE.Euler>(new THREE.Euler(0, 0, 0));
 
   const { modelDetail, error } = useModelDetail(id, API_URL, API_TOKEN);
@@ -39,6 +40,7 @@ const Model3DView: React.FC<Model3DViewProps> = ({ id }) => {
     if (orbitRef.current) {
       orbitRef.current.object.position.copy(initialCameraPosition.current);
       orbitRef.current.object.rotation.copy(initialCameraRotation.current);
+      orbitRef.current.target.copy(initialCameraTarget.current); // Reset target
       orbitRef.current.update();
     }
     setWireframe(false);
@@ -49,6 +51,7 @@ const Model3DView: React.FC<Model3DViewProps> = ({ id }) => {
     if (orbitRef.current) {
       initialCameraPosition.current.copy(orbitRef.current.object.position);
       initialCameraRotation.current.copy(orbitRef.current.object.rotation);
+      initialCameraTarget.current.copy(orbitRef.current.target); // Store initial target
     }
   }, [modelDetail]);
 
@@ -70,7 +73,7 @@ const Model3DView: React.FC<Model3DViewProps> = ({ id }) => {
                     <Model3D url={modelDetail.model} wireframe={wireframe} onClick={handleClick} />
                   </Stage>
                 </PresentationControls>
-                <OrbitControls ref={orbitRef} />
+                <OrbitControls ref={orbitRef} target={initialCameraTarget.current.toArray()} />
               </Canvas>
               <CoordinatesDisplay point={clickedPoint} />
               <button
