@@ -22,7 +22,13 @@ const App: React.FC = () => {
       <div className="flex flex-1 overflow-hidden">
         {models.length > 0 ? (
           <div className="w-1/4 h-full overflow-y-auto">
-            <ModelSelectionList models={models} onSelect={handleModelSelect} />
+            <ModelSelectionList models={
+              models.map(model => ({
+              ...model,
+              thumbnail: `/thumbs/${model.id}.png`
+
+              }))  
+            } onSelect={handleModelSelect} />
           </div>
         ) : (
           <div className="w-1/4 h-full flex items-center justify-center text-gray-500">
